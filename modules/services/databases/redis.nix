@@ -60,8 +60,13 @@ in
     environment.systemPackages = [ cfg.package ];
 
     launchd.user.agents.redis = {
-      command = "${cfg.package}/bin/redis-server /etc/redis.conf";
+      path = [ cfg.package pkgs.coreutils ];
+      script = ''
+        mkdir -p ${cfg.dataDir}
+        ${cfg.package}/bin/redis-server /etc/redis.conf
+      '' ;
       serviceConfig.KeepAlive = true;
+      serviceConfig.RunAtLoad = true;
     };
 
     environment.etc."redis.conf".text = ''

@@ -177,6 +177,8 @@ let
     (loadModule ./services/search/elasticsearch.nix {})
     (loadModule ./services/databases/neo4j.nix {})
     (loadModule ./services/misc/zookeeper.nix {})
+    (loadModule ./services/misc/apache-kafka.nix {})
+    (loadModule ./services/misc/confluent-schema-registry.nix {})
   ];
 
   modules = map (getAttr "file") (filter (getAttr "condition") allModules);

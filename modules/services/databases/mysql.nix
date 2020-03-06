@@ -286,6 +286,7 @@ in
       { path = [ cfg.package ];
         script = ''
           # Initialise the database.
+          mkdir -p ${cfg.dataDir}
           if ! test -e ${cfg.dataDir}/mysql; then
             ${mysql}/bin/mysql_install_db --defaults-file=/etc/my.cnf ${installOptions}
             touch /tmp/mysql_init

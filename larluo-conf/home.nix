@@ -123,9 +123,27 @@
     package = pkgs.neo4j ;
     directories.home = "/opt/nix-module/data/neo4j" ;
   } ;
+
   services.zookeeper = {
     enable = true ;
     package = pkgs.zookeeper ;
     dataDir = "/opt/nix-module/data/zookeeper" ;
+  } ;
+
+  services.apache-kafka = {
+    enable = true ;
+    package = pkgs.apacheKafka ;
+    logDirs = [ "/opt/nix-module/data/kafka" ] ;
+    zookeeper = "localhost:2181" ;
+    extraProperties = ''
+      offsets.topic.replication.factor = 1
+      zookeeper.session.timeout.ms = 600000
+    '' ;    
+  } ;
+
+  services.confluent-schema-registry = {
+    enable = true ;
+    package = pkgs.confluent-platform ;
+    kafkas = [ "PLAINTEXT://localhost:9092" ] ;
   } ;
 }

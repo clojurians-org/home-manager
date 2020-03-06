@@ -62,7 +62,7 @@ in
       };
 
       characterSet = mkOption {
-        type = types.string;
+        type = types.str ;
         default = "UTF8";
         example = "SJIS";
         description = ''Character set specified during initialization'';
@@ -104,9 +104,10 @@ in
     environment.systemPackages = [ postgresql ];
 
     launchd.user.agents.postgresql =
-      { path = [ postgresql ];
+      { path = [ postgresql pkgs.coreutils ];
         script = ''
           # Initialise the database.
+          mkdir -p ${cfg.dataDir}
           if ! test -e ${cfg.dataDir}/PG_VERSION; then
             initdb -U postgres -D ${cfg.dataDir} -E ${cfg.characterSet}
           fi
