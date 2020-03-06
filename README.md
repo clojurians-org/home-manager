@@ -32,6 +32,7 @@
 -------
  
 1.  编写配置(参见larluo-conf/home.nix)
+
 ```nix
 { config, pkgs, ... }:
 
@@ -73,55 +74,9 @@
     pkgs.clang-tools
     pkgs.dhall
     pkgs.python38
-    # pkgs.vue (no-darwin yet)
     pkgs.maven
-
-    pkgs.tree
-    pkgs.jq
-    pkgs.avro-tools
-    pkgs.curl
-    pkgs.wget
-    pkgs.ws
-    pkgs.aria2
-    pkgs.wrk
-    pkgs.unzip
-    pkgs.xz
-
-    pkgs.pandoc
-    pkgs.privoxy
-
-    pkgs.redis
-    pkgs.postgresql_11
-    # pkgs.mysql80
-    pkgs.mysql57
-    pkgs.elasticsearch7
-    pkgs.neo4j
-    pkgs.apacheKafka
-    pkgs.confluent-platform
-    pkgs.kafkacat
-
-    pkgs.minio
-    pkgs.minio-client
-    pkgs.neo4j
-    # pkgs.clickhouse (no-darwin yet)
-    pkgs.cassandra
-
-    # pkgs.imagemagick
-    # pkgs.shadowsocks-libev
-    pkgs.fish
   ];
 
-  services.privoxy = {
-    enable = false ;
-    listenAddress = "0.0.0.0:8118" ;
-    config = "forward-socks5 / 0.0.0.0:1080 ." ;
-  } ;
-
-  services.redis = {
-   enable = true ;
-   dataDir = "/opt/nix-module/data/redis" ;
-   unixSocket = "/opt/nix-module/run/redis.sock" ;
-  } ;
 
   services.postgresql = { 
     enable = true ; 
@@ -129,25 +84,6 @@
     dataDir = "/opt/nix-module/data/postgresql" ;
   } ;
 
-  services.mysql = {
-    enable = true ;
-    # package = pkgs.mysql80 ;
-    package = pkgs.mysql57 ;
-    dataDir = "/opt/nix-module/data/mysql" ;
-    unixSocket = "/opt/nix-module/run/mysql.sock" ;
-  } ;
-
-  services.elasticsearch = {
-    enable = true ;
-    package = pkgs.elasticsearch7 ;
-    dataDir = "/opt/nix-module/data/elasticsearch" ;
-  } ;
-  
-  services.neo4j = {
-    enable = true ;
-    package = pkgs.neo4j ;
-    directories.home = "/opt/nix-module/data/neo4j" ;
-  } ;
 }
 
 ```
@@ -159,13 +95,32 @@
     $ home-manager -I home-manager=<home-manager> -f larluo-conf/home.nix  switch
     ```
 
+核心模块
+----------
+
+1. 数据库模块
+- redis
+- postgresql
+- mysql
+- elasticsearch
+- neo4j
+- zookeeper
+- kafka
+- kafka schema-registry
+- Kafka ksql
+
+2. 官方未支持pakage(后续迁移)
+- vue (darwin)
+- clickhouse (darwin)
+- wpsoffice (darwin)
+
 开发模式
 --------
-    下载github到本地进行调试
+
+1. 下载github到本地进行调试
     ```console
     $ git clone https://github.com/clojurians-org/home-manager.git
     $ cd home-manager
     $ nix-shell -A install
     $ home-manager -I home-manager=. -f larluo-conf/home.nix  switch
     ```
-
