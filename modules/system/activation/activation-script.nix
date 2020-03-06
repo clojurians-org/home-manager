@@ -64,9 +64,9 @@ in
       # The readlink is there to ensure that when $systemConfig = /system
       # (which is a symlink to the store), /run/current-system is still
       # used as a garbage collection root.
-      ln -sfn "$(readlink -f "$systemConfig")" /run/current-system
+      # ln -sfn "$(readlink -f "$systemConfig")" /run/current-system
       # Prevent the current configuration from being garbage-collected.
-      ln -sfn /run/current-system /nix/var/nix/gcroots/current-system
+      # ln -sfn /run/current-system /nix/var/nix/gcroots/current-system
       exit $_status
     '';
 

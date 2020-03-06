@@ -400,7 +400,8 @@ in
     environment.systemPath = [ (makeBinPath config.environment.profiles) "/usr/local/bin:/usr/bin:/usr/sbin:/bin:/sbin" ];
     environment.profiles = mkMerge [
       (mkOrder 800 [ "$HOME/.nix-profile" ])
-      [ "/run/current-system/sw" "/nix/var/nix/profiles/default" ]
+      [ # "/run/current-system/sw" 
+        "/nix/var/nix/profiles/default" ]
     ];
 
 

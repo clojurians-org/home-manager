@@ -70,7 +70,7 @@ let
         serviceConfig = mkOption {
           type = types.submodule launchdConfig;
           example =
-            { Program = "/run/current-system/sw/bin/nix-daemon";
+            { Program = "";
               KeepAlive = true;
             };
           default = {};
