@@ -6,5 +6,5 @@ rec {
   install =
     pkgs.callPackage ./home-manager/install.nix { inherit home-manager; };
 
-  nixos = import ./nixos;
+  # nixos = import ./nixos;
 }
