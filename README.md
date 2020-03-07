@@ -21,14 +21,15 @@
 
     ```console
     $ nix-channel --add https://github.com/clojurians-org/home-manager/archive/master.tar.gz home-manager
-    $ nix-channel --update
+    $ nix-channel --update home-manager
     ```
 
 
 3.  安装home-manager工具
 
     ```console
-    $ nix-shell ~/.nix-defexpr/channels/home-manager -A install
+    $ export NIX_PATH=~/.nix-defexpr/channels
+    $ nix-shell '<home-manager>' -A install
     ```
 
 
@@ -110,7 +111,7 @@
 
 1. 查看所有package
 ```console
-$ nix-env -f nix-env -f  ~/.nix-defexpr/channels/nixpkgs -qaP
+$ nix-env -f  ~/.nix-defexpr/channels/nixpkgs -qaP
 ```
 
 2. 查看所有module [参考 modules/module-list.nix]
