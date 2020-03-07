@@ -4,14 +4,18 @@
 
 1.  安装nix 并配置channel
 
+    
     ```console
     $ sudo install -d -m755 -o $(id -u) -g $(id -g) /nix
     $ curl https://nixos.org/nix/install | sh
+    $ source ~/.nix-profile/etc/profile.d/nix.sh
 
     $ nix-channel --add https://nixos.org/channels/nixos-20.03 nixos-20.03
     $ nix-channel --update nixos-20.03
 
     ```
+    如果不能创建/nix目录，请进入安全模式使用csrutil关闭SIP
+
 
 2.  添加home-manager channel
 
@@ -24,14 +28,18 @@
 3.  安装home-manager工具
 
     ```console
-    $ nix-shell '<home-manager>' -A install
+    $ nix-shell ~/.nix-defexpr/channels/home-manager -A install
     ```
 
 
 使用方法
 -------
  
-1.  编写配置(参见larluo-conf/home.nix)
+1.  编写默认配置 ~/.config/nixpkgs/home.nix 或其它路径
+
+    配置文件格式参见larluo-conf/home.nix
+
+    软件清单见下一节
 
 ```nix
 { config, pkgs, ... }:
@@ -90,10 +98,22 @@
 
 
 2.  激活生效
+
+    如果不指定-f选项，默认为~/.config/nixpkgs/home.nix文件
     ```console
     $ export NIX_PATH=~/.nix-defexpr/channels
-    $ home-manager -I home-manager=<home-manager> -f larluo-conf/home.nix  switch
+    $ home-manager -f larluo-conf/home.nix  switch
     ```
+    
+软件清单
+----------
+
+1. 查看所有package
+```console
+$ nix-env -f nix-env -f  ~/.nix-defexpr/channels/nixpkgs -qaP
+```
+
+2. 查看所有module [参考 modules/module-list.nix]
 
 核心模块
 ----------
