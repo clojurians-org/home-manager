@@ -126,7 +126,7 @@ in
       mkdir -p ~/Library/LaunchAgents
       ''}
       ${concatMapStringsSep "\n" (attr: userLaunchdActivation attr.target) userLaunchAgents}
-      for f in $(ls /run/current-system/user/Library/LaunchAgents 2> /dev/null); do
+      for f in $(ls ~/Library/LaunchAgents 2> /dev/null); do
         if test ! -e "${cfg.build.launchd}/user/Library/LaunchAgents/$f"; then
           echo "removing user service $(basename $f .plist)" >&2
           launchctl unload ~/Library/LaunchAgents/$f || true
