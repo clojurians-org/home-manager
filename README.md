@@ -127,13 +127,26 @@ $ nix-env -f  ~/.nix-defexpr/channels/nixpkgs -qaP
 - neo4j
 - zookeeper
 - kafka
-- kafka schema-registry
-- Kafka ksql
+- confluent schema-registry
+- confluent ksql
 
 2. 官方未支持pakage(后续迁移)
 - vue (darwin)
 - clickhouse (darwin)
 - wpsoffice (darwin)
+
+客户端连接:
+
+```console
+mysql                     => mysql -u root -S /nix/var/run/mysqld.sock
+postgresq                 => psql -d postgres
+elasticsearch             => curl http://localhost:9200
+neo4j                     => cypher-shell -uneo4j -pneo4j
+zookeeper                 => zkCli.sh
+kafka                     => kafka-topics.sh --bootstrap-server localhost:9092 --list
+confluent schema-registry => curl http://localhost:8081
+redis                     => redis-cli
+```
 
 开发模式
 --------
