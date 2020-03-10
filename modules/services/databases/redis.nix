@@ -1,81 +1,80 @@
-  
-{ config, lib, pkgs, ... }:
+{ config, lib, pkgs, nixos, ... }@nixpkgs:
 
-with lib;
+with lib ;
 
 let
-  cfg = config.services.redis;
-in
+  name = "redis" ;
+  cfg = config.services."${name}" ;
+  m = import (<nixpkgs/nixos/modules/services/databases> + builtins.toPath "/${name}.nix") nixpkgs ;
+  sd = m.config.content.systemd.services."${name}" ;
 
-{
-  options = {
-    services.redis.enable = mkOption {
-      type = types.bool;
-      default = false;
-      description = "Whether to enable the redis database service.";
+  # redis dir and pidfile to user directory
+  redisBool = b: if b then "yes" else "no";
+  condOption = name: value: if value != null then "${name} ${toString value}" else "";
+  redisConfig = pkgs.writeText "redis.conf" ''
+    port ${toString cfg.port}
+    ${condOption "bind" cfg.bind}
+    ${condOption "unixsocket" cfg.unixSocket}
+    daemonize yes
+    supervised systemd
+    loglevel ${cfg.logLevel}
+    logfile ${cfg.logfile}
+    syslog-enabled ${redisBool cfg.syslog}
+    pidfile /nix/var/run/redis.pid
+    databases ${toString cfg.databases}
+    ${concatMapStrings (d: "save ${toString (builtins.elemAt d 0)} ${toString (builtins.elemAt d 1)}\n") cfg.save}
+    dbfilename dump.rdb
+    dir ${cfg.dataDir}
+    ${if cfg.slaveOf != null then "slaveof ${cfg.slaveOf.ip} ${toString cfg.slaveOf.port}" else ""}
+    ${condOption "masterauth" cfg.masterAuth}
+    ${condOption "requirepass" cfg.requirePass}
+    appendOnly ${redisBool cfg.appendOnly}
+    appendfsync ${cfg.appendFsync}
+    slowlog-log-slower-than ${toString cfg.slowLogLogSlowerThan}
+    slowlog-max-len ${toString cfg.slowLogMaxLen}
+    ${cfg.extraConfig}
+  '';
+
+in m // {
+  options = m.options //
+  { services."${name}" = m.options.services."${name}" //
+    {
+      dataDir = mkOption {
+        type = types.path;
+        default = "/var/lib/redis";
+        description = "Data directory for the redis database.";
+      };
+
     };
-
-    services.redis.package = mkOption {
-      type = types.path;
-      default = pkgs.redis;
-      defaultText = "pkgs.redis";
-      description = "This option specifies the redis package to use";
-    };
-
-    services.redis.dataDir = mkOption {
-      type = types.path;
-      default = "/var/lib/redis";
-      description = "Data directory for the redis database.";
-    };
-
-    services.redis.port = mkOption {
-      type = types.int;
-      default = 6379;
-      description = "The port for Redis to listen to.";
-    };
-
-    services.redis.bind = mkOption {
-      type = types.nullOr types.str;
-      default = null; # All interfaces
-      description = "The IP interface to bind to.";
-      example = "127.0.0.1";
-    };
-
-    services.redis.unixSocket = mkOption {
-      type = types.nullOr types.path;
-      default = null;
-      description = "The path to the socket to bind to.";
-      example = "/var/run/redis.sock";
-    };
-
-    services.redis.appendOnly = mkOption {
-      type = types.bool;
-      default = false;
-      description = "By default data is only periodically persisted to disk, enable this option to use an append-only file for improved persistence.";
-    };
-  };
-
-  config = mkIf cfg.enable {
-
-    environment.systemPackages = [ cfg.package ];
-
-    launchd.user.agents.redis = {
-      path = [ cfg.package pkgs.coreutils ];
-      script = ''
-        mkdir -p ${cfg.dataDir}
-        ${cfg.package}/bin/redis-server /etc/redis.conf
-      '' ;
-      serviceConfig.KeepAlive = true;
-      serviceConfig.RunAtLoad = true;
-    };
-
-    environment.etc."redis.conf".text = ''
-      port ${toString cfg.port}
-      ${optionalString (cfg.bind != null) "bind ${cfg.bind}"}
-      ${optionalString (cfg.unixSocket != null) "unixsocket ${cfg.unixSocket}"}
-      dir ${cfg.dataDir}
-      appendOnly ${if cfg.appendOnly then "yes" else "no"}
-    '';
-
+  } ;
+  config = { 
+    _type = m.config._type; 
+    condition = m.config.condition ;
+    content = builtins.removeAttrs m.config.content [ "users" "systemd" "meta" "networking" "boot" ] // 
+      optionalAttrs (hasAttrByPath ["services" name] m.config.content)  { 
+        services."${name}" = m.config.content.services."${name}" // 
+          optionalAttrs (hasAttrByPath ["services" name "unixSocket"]  m.config.content.services."${name}".unixSocket) 
+            { unixSocket = "/nix/var/run/${name}.sock" ;} ; 
+      } // 
+      {
+        environment = {systemPackages = m.config.content.environment.systemPackages; }  ;
+         
+        launchd.user.agents."${name}" = {
+          serviceConfig.EnvironmentVariables = mapAttrs (n: v: toString v) (sd.environment or {});
+          path = (sd.path or []) ++ [ pkgs.coreutils ] ;
+          script = builtins.replaceStrings  
+                     [ "/run"   ] 
+                     [ "/nix/var/run"  ] ''
+            mkdir -p /run
+            mkdir -p ${cfg.dataDir}
+            ${optionalString (hasAttrByPath ["preStart"] sd) sd.preStart}
+            # $\{sd.serviceConfig.ExecStart or sd.script}
+            ${cfg.package}/bin/redis-server ${redisConfig}
+            # $\{sd.serviceConfig.ExecStartPost}
+          '' ;
+          serviceConfig.KeepAlive = true;
+          serviceConfig.RunAtLoad = true;
+        } ;
+      } ;
   };
 }

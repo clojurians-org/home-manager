@@ -81,6 +81,8 @@
     # pkgs.clickhouse (no-darwin yet)
     pkgs.cassandra
 
+    pkgs.metabase
+
     # pkgs.imagemagick
     # pkgs.shadowsocks-libev
     pkgs.fish
@@ -95,11 +97,10 @@
   services.redis = {
    enable = true ;
    dataDir = "/opt/nix-module/data/redis" ;
-   unixSocket = "/opt/nix-module/run/redis.sock" ;
   } ;
 
   services.postgresql = { 
-    enable = true ; 
+    enable = true ;
     package = pkgs.postgresql_11 ;
     dataDir = "/opt/nix-module/data/postgresql" ;
   } ;
@@ -109,7 +110,6 @@
     # package = pkgs.mysql80 ;
     package = pkgs.mysql57 ;
     dataDir = "/opt/nix-module/data/mysql" ;
-    unixSocket = "/opt/nix-module/run/mysql.sock" ;
   } ;
 
   services.elasticsearch = {
