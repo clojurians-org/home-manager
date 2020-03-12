@@ -88,12 +88,6 @@
     pkgs.fish
   ];
 
-  services.privoxy = {
-    enable = false ;
-    listenAddress = "0.0.0.0:8118" ;
-    config = "forward-socks5 / 0.0.0.0:1080 ." ;
-  } ;
-
   services.redis = {
    enable = true ;
    package = pkgs.redis ;

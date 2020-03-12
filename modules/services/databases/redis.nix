@@ -84,6 +84,7 @@ in m // {
         environment = {systemPackages = m.config.content.environment.systemPackages; }  ;
          
         launchd.user.agents."${name}" = {
+          inherit path script ;
           serviceConfig.EnvironmentVariables = environmentVariables ;
           serviceConfig.KeepAlive = true;
           serviceConfig.RunAtLoad = true;

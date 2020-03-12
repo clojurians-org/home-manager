@@ -155,17 +155,24 @@ confluent schema-registry => curl http://localhost:8081
 redis                     => redis-cli
 ```
 
-系统参数
+常见问题
 --------
 
-```console
-  sudo sysctl -w vm.max_map_count=262144
-  # check: sysctl -n vm.max_map_count
-  >> /etc/security/limits.conf
-   | * soft nofile 63356
-   | * hard nofile 63356
-  # check: ulimit -n
-```
+如果服务不正常，请检查相关系统参数
+
+1. vm.max_map_count
+  ```console
+  sysctl -n vm.max_map_count
+  # set: sudo sysctl -w vm.max_map_count=262144
+  ```
+
+2. ulimit -n 
+  ```console
+  ulimit -n
+  #>> /etc/security/limits.conf
+  # | * soft nofile 63356
+  # | * hard nofile 63356
+  ```
 
 开发模式
 --------
