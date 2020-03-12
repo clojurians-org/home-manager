@@ -96,6 +96,7 @@
 
   services.redis = {
    enable = true ;
+   package = pkgs.redis ;
    dataDir = "/opt/nix-module/data/redis" ;
   } ;
 

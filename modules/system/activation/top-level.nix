@@ -411,7 +411,7 @@ in
       [ # "/run/current-system/sw" 
         "/nix/var/nix/profiles/default" ]
     ];
-
+    systemd.user.startServices = true ;
 
     home.username = mkDefault (builtins.getEnv "USER");
     home.homeDirectory = mkDefault (builtins.getEnv "HOME");
@@ -537,18 +537,10 @@ in
           ${cfgSystem.activationScripts.userScript.text}
           
         '' ;
-        activationScript = pkgs.writeScript "activation-script" ''
-          ${cfgSystem.activationScripts.script.text}
-        '' ;
-        darwinLabel = "dummy" ;
       in 
         throwAssertions (showWarnings (stdenvNoCC.mkDerivation {
           name = "home-manager-generation" ;
           preferLocalBuild = true;
-          
-          # activationScript = cfgSytem.activationScripts.script.text;
-          # activationUserScript = cfgSytem.activationScripts.userScript.text;
-          # inherit (cfgSytem) darwinLabel;
           
           buildCommand = ''
             mkdir -p $out
@@ -563,28 +555,17 @@ in
             ln -s ${config.home-files} $out/home-files
             ln -s ${cfg.path} $out/home-path
           
-            mkdir -p $out/Library
-            # ln -s $\{cfgSystem.build.applications}/Applications $out/Applications
-            ln -s ${cfgSystem.build.launchd}/Library/LaunchAgents $out/Library/LaunchAgents
-            ln -s ${cfgSystem.build.launchd}/Library/LaunchDaemons $out/Library/LaunchDaemons
             mkdir -p $out/user/Library
             ln -s ${cfgSystem.build.launchd}/user/Library/LaunchAgents $out/user/Library/LaunchAgents
 
-            cp ${activationUserScript} $out/activate-user
-            substituteInPlace $out/activate-user \
+            cp ${activationUserScript} $out/activate
+            substituteInPlace $out/activate \
               --subst-var-by GENERATION_DIR $out \
               --subst-var out
-            chmod u+x $out/activate-user
+            chmod u+x $out/activate
             unset activationUserScript
           
-            cp ${activationScript} $out/activate
-            substituteInPlace $out/activate --subst-var out
-            chmod u+x $out/activate
-            unset activationScript
-          
-          
             echo -n "$systemConfig" > $out/systemConfig
-            echo -n "$darwinLabel" > $out/darwin-version
             echo -n "$system" > $out/system
           
             ${cfg.extraBuilderCommands}

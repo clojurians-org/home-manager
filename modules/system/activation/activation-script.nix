@@ -36,40 +36,6 @@ in
 
   config = {
 
-    system.activationScripts.script.text = ''
-      #! ${stdenv.shell}
-      set -e
-      set -o pipefail
-      export PATH=${pkgs.coreutils}/bin:@out@/sw/bin:${config.environment.systemPath}
-      systemConfig=@out@
-      _status=0
-      trap "_status=1" ERR
-      # Ensure a consistent umask.
-      umask 0022
-      ${cfg.activationScripts.preActivation.text}
-      ${cfg.activationScripts.extraActivation.text}
-      # $\{cfg.activationScripts.groups.text}
-      # $\{cfg.activationScripts.users.text}
-      # $\{cfg.activationScripts.nix.text}
-      # $\{cfg.activationScripts.applications.text}
-      ${cfg.activationScripts.etc.text}
-      # $\{cfg.activationScripts.defaults.text}
-      # $\{cfg.activationScripts.launchd.text}
-      # $\{cfg.activationScripts.nix-daemon.text}
-      # $\{cfg.activationScripts.time.text}
-      # $\{cfg.activationScripts.networking.text}
-      # $\{cfg.activationScripts.keyboard.text}
-      ${cfg.activationScripts.postActivation.text}
-      # Make this configuration the current configuration.
-      # The readlink is there to ensure that when $systemConfig = /system
-      # (which is a symlink to the store), /run/current-system is still
-      # used as a garbage collection root.
-      # ln -sfn "$(readlink -f "$systemConfig")" /run/current-system
-      # Prevent the current configuration from being garbage-collected.
-      # ln -sfn /run/current-system /nix/var/nix/gcroots/current-system
-      exit $_status
-    '';
-
     system.activationScripts.userScript.text = ''
       #! ${stdenv.shell}
       set -e
