@@ -4,14 +4,13 @@
 
 1.  安装nix 并配置channel
 
-    
     ```console
     $ sudo install -d -m755 -o $(id -u) -g $(id -g) /nix
     $ curl https://nixos.org/nix/install | sh
     $ source ~/.nix-profile/etc/profile.d/nix.sh
 
-    $ nix-channel --add https://nixos.org/channels/nixos-20.03 nixos-20.03
-    $ nix-channel --update nixos-20.03
+    $ nix-channel --add https://nixos.org/channels/nixos-20.03 nixpkgs
+    $ nix-channel --update nixpkgs
 
     ```
     如果不能创建/nix目录，请进入安全模式使用csrutil关闭SIP
@@ -32,6 +31,14 @@
     $ nix-shell '<home-manager>' -A install
     ```
 
+4.  linux 平台确保systemd --user运行
+
+    使用systemctl --user 连接
+    若Failed to connect to bus报错, 手工启动用户进程:
+    ```console
+    sudo chmod -R o+rw /sys/fs/cgroup/systemd/user.slice/user-1000.slice
+    nohup /usr/lib/systemd/systemd --user 2>&1 > /dev/null &
+    ```
 
 使用方法
 -------
@@ -139,13 +146,25 @@ $ nix-env -f  ~/.nix-defexpr/channels/nixpkgs -qaP
 
 ```console
 mysql                     => mysql -u root -S /nix/var/run/mysqld.sock
-postgresq                 => psql -d postgres
+postgresql                => psql -h /nix/var/run postgres
 elasticsearch             => curl http://localhost:9200
 neo4j                     => cypher-shell -uneo4j -pneo4j
 zookeeper                 => zkCli.sh
 kafka                     => kafka-topics.sh --bootstrap-server localhost:9092 --list
 confluent schema-registry => curl http://localhost:8081
 redis                     => redis-cli
+```
+
+系统参数
+--------
+
+```console
+  sudo sysctl -w vm.max_map_count=262144
+  # check: sysctl -n vm.max_map_count
+  >> /etc/security/limits.conf
+   | * soft nofile 63356
+   | * hard nofile 63356
+  # check: ulimit -n
 ```
 
 开发模式
@@ -158,3 +177,4 @@ redis                     => redis-cli
     $ nix-shell -A install
     $ home-manager -I home-manager=. -f larluo-conf/home.nix  switch
     ```
+

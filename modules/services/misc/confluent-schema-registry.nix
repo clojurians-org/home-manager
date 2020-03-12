@@ -3,6 +3,7 @@
 with lib;
 
 let
+  name = "confluent-schema-registry" ;
   cfg = config.services.confluent-schema-registry ;
 
   schemaRegistryProperties =
@@ -18,6 +19,31 @@ let
 
   schemaRegistryConfig = pkgs.writeText "schema-registry.properties" schemaRegistryProperties;
   logConfig = pkgs.writeText "log4j.properties" cfg.log4jProperties;
+          classpath = concatStringsSep ":" 
+                        (map (x: "${cfg.package}/share/java/${x}/*")
+                          [ "confluent-security/schema-registry" 
+                            "confluent-common" 
+                            "rest-utils" 
+                            "schema-registry"]) ;
+
+  environmentVariables = {} ;
+  path = [ cfg.package pkgs.coreutils ];
+  script = ''
+    #! ${pkgs.runtimeShell} -e
+    # Initialise the database.
+    ${pkgs.jre}/bin/java \
+      -cp "${classpath}" \
+      -Dlog4j.configuration=file:${logConfig} \
+      ${toString cfg.jvmOptions} \
+      io.confluent.kafka.schemaregistry.rest.SchemaRegistryMain \
+      ${schemaRegistryConfig}
+  '';
+  scriptFile = pkgs.writeTextFile {
+    name = "${name}-start" ;
+    executable = true ;
+    text = script ;
+  }  ;
+
 
 in {
 
@@ -101,31 +127,30 @@ in {
 
   config = mkIf cfg.enable {
 
-    environment.systemPackages = [cfg.package];
-
-    launchd.user.agents.confluent-schema-registry = 
-      let 
-        classpath = concatStringsSep ":" 
-                      (map (x: "${cfg.package}/share/java/${x}/*")
-                        [ "confluent-security/schema-registry" 
-                          "confluent-common" 
-                          "rest-utils" 
-                          "schema-registry"]) ;
-      in 
-      {
-          path = [ cfg.package pkgs.coreutils ];
-          script = ''
-            # Initialise the database.
-            ${pkgs.jre}/bin/java \
-              -cp "${classpath}" \
-              -Dlog4j.configuration=file:${logConfig} \
-              ${toString cfg.jvmOptions} \
-              io.confluent.kafka.schemaregistry.rest.SchemaRegistryMain \
-              ${schemaRegistryConfig}
-          '';
-        
+      environment.systemPackages = [cfg.package];
+      launchd.user.agents.confluent-schema-registry = 
+        {
+          inherit path script ;        
           serviceConfig.KeepAlive = true;
           serviceConfig.RunAtLoad = true;
-    } ;
+        } ;
+      systemd.user.services."${name}" = {
+        Unit = {
+          Description = "${name}" ;
+        } ;
+        Service = {
+          Environment = concatStringsSep " " (
+            mapAttrsToList (name: value: "${name}=${value}")
+              (environmentVariables // { PATH = makeBinPath path ; })
+          );
+          ExecStart = "${scriptFile}" ;
+          RestartSec = 3 ;
+          Restart = "always" ;
+        } ;
+        Install = {
+          WantedBy = [ "default.target" ] ;
+        } ;
+      } ;
+
   };
 }

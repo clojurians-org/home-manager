@@ -11,16 +11,17 @@ let
   # redis dir and pidfile to user directory
   redisBool = b: if b then "yes" else "no";
   condOption = name: value: if value != null then "${name} ${toString value}" else "";
-  redisConfig = pkgs.writeText "redis.conf" ''
+  conf = "redis.conf" ;
+  conf-text = ''
     port ${toString cfg.port}
     ${condOption "bind" cfg.bind}
     ${condOption "unixsocket" cfg.unixSocket}
-    daemonize yes
-    supervised systemd
+    # daemonize yes
+    # supervised systemd
     loglevel ${cfg.logLevel}
     logfile ${cfg.logfile}
     syslog-enabled ${redisBool cfg.syslog}
-    pidfile /nix/var/run/redis.pid
+    pidfile /run/redis.pid
     databases ${toString cfg.databases}
     ${concatMapStrings (d: "save ${toString (builtins.elemAt d 0)} ${toString (builtins.elemAt d 1)}\n") cfg.save}
     dbfilename dump.rdb
@@ -34,6 +35,29 @@ let
     slowlog-max-len ${toString cfg.slowLogMaxLen}
     ${cfg.extraConfig}
   '';
+
+  path = (sd.path or []) ++ [ pkgs.coreutils ] ;
+  script = builtins.replaceStrings  
+             [ "/run" "/etc"] 
+             [ "/nix/var/run"  "/nix/var/etc"] ''
+    #! ${pkgs.runtimeShell} -e
+    mkdir -p /run
+    mkdir -p /etc
+    mkdir -p ${cfg.dataDir}
+    ${optionalString (hasAttrByPath ["preStart"] sd) sd.preStart}
+
+    echo "${conf-text}" > /etc/redis.conf
+    ${cfg.package}/bin/redis-server /etc/redis.conf
+    # $\{sd.serviceConfig.ExecStart or sd.script}
+    # $\{sd.serviceConfig.ExecStartPost}
+  '' ;
+  scriptFile = pkgs.writeTextFile {
+    name = "${name}-start" ;
+    executable = true ;
+    text = script ;
+  }  ;
+
+  environmentVariables = mapAttrs (n: v: toString v) (sd.environment or {}) ;
 
 in m // {
   options = m.options //
@@ -60,21 +84,28 @@ in m // {
         environment = {systemPackages = m.config.content.environment.systemPackages; }  ;
          
         launchd.user.agents."${name}" = {
-          serviceConfig.EnvironmentVariables = mapAttrs (n: v: toString v) (sd.environment or {});
-          path = (sd.path or []) ++ [ pkgs.coreutils ] ;
-          script = builtins.replaceStrings  
-                     [ "/run"   ] 
-                     [ "/nix/var/run"  ] ''
-            mkdir -p /run
-            mkdir -p ${cfg.dataDir}
-            ${optionalString (hasAttrByPath ["preStart"] sd) sd.preStart}
-            # $\{sd.serviceConfig.ExecStart or sd.script}
-            ${cfg.package}/bin/redis-server ${redisConfig}
-            # $\{sd.serviceConfig.ExecStartPost}
-          '' ;
+          serviceConfig.EnvironmentVariables = environmentVariables ;
           serviceConfig.KeepAlive = true;
           serviceConfig.RunAtLoad = true;
         } ;
+        systemd.user.services."${name}" = {
+          Unit = {
+            Description = "${name}" ;
+          } ;
+          Service = {
+            Environment = concatStringsSep " " (
+              mapAttrsToList (name: value: "${name}=${value}")
+                (environmentVariables // { PATH = makeBinPath path ; })
+            );
+            ExecStart = "${scriptFile}" ;
+            RestartSec = 3 ;
+            Restart = "always" ;
+          } ;
+          Install = {
+            WantedBy = [ "default.target" ] ;
+          } ;
+        } ;
+
       } ;
   };
 }

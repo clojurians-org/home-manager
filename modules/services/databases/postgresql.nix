@@ -40,7 +40,7 @@ in m // {
       } ;
       launchd.user.agents."${name}" = {
         inherit path script ;
-        serviceConfig.EnvironmentVariables = sd.environment ;
+        serviceConfig.EnvironmentVariables = (sd.environment or {});
         serviceConfig.KeepAlive = true;
         serviceConfig.RunAtLoad = true;
       } ;
@@ -51,7 +51,7 @@ in m // {
         Service = {
           Environment = concatStringsSep " " (
             mapAttrsToList (name: value: "${name}=${value}") 
-              (sd.environment // { PATH = makeBinPath path ; })
+              ((sd.environment or {})// { PATH = makeBinPath path ; })
           );
           ExecStart = "${scriptFile}" ;
           RestartSec = 3 ;

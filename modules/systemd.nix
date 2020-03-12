@@ -188,22 +188,22 @@ in
   };
 
   config = mkMerge [
-    {
-      assertions = [
-        {
-          assertion = enabled -> pkgs.stdenv.isLinux;
-          message =
-            let
-              names = concatStringsSep ", " (
-                  attrNames (
-                      cfg.services // cfg.sockets // cfg.targets // cfg.timers // cfg.paths // cfg.sessionVariables
-                  )
-              );
-            in
-              "Must use Linux for modules that require systemd: " + names;
-        }
-      ];
-    }
+    #{
+    #  assertions = [
+    #    {
+    #      assertion = enabled -> pkgs.stdenv.isLinux;
+    #      message =
+    #        let
+    #          names = concatStringsSep ", " (
+    #              attrNames (
+    #                  cfg.services // cfg.sockets // cfg.targets // cfg.timers // cfg.paths // cfg.sessionVariables
+    #              )
+    #          );
+    #        in
+    #          "Must use Linux for modules that require systemd: " + names;
+    #    }
+    #  ];
+    #}
 
     # If we run under a Linux system we assume that systemd is
     # available, in particular we assume that systemctl is in PATH.
